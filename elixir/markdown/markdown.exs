@@ -15,31 +15,82 @@ defmodule Markdown do
     text
     |> String.split("\n")
     |> Enum.map(&process/1)
-    |> Enum.join()
-    |> patch
+    |> group_by()
+    |> join_groups
   end
 
-  defp group_by(lines) do
-    # i need my own group_by, just like python one works by default
-    Enum.reduce(lines, {}, fn line, acc ->
+  @doc """
+    Groups lines into a keyword list.
+
+    ## Examples
+
+    iex> Markdown.group_by [a: "foo", a: "bar", b: "spam", a: "eggs"]
+    [a: ["foo", "bar"], b: ["spam"], a: "eggs"]
+  """
+  @spec group_by(keyword(String.t())) :: keyword(list(String.t()))
+  def group_by(lines) do
+    Enum.reduce(lines, [], fn {group, line}, acc ->
+      case acc do
+        [h | t] ->
+          case h do
+            {^group, _} ->
+              [{group, elem(h, 1) ++ [line]} | t]
+
+            _ ->
+              [{group, [line]} | acc]
+          end
+
+        [] ->
+          [{group, [line]}]
+      end
     end)
+    |> Enum.reverse()
+  end
+
+  def join_groups(groups) do
+    Enum.reduce(groups, [], fn {group, lines}, acc ->
+      case group do
+        :list ->
+          line =
+            lines
+            |> Enum.join()
+            |> enclose_with_tag("ul")
+
+          acc ++ [line]
+
+        _ ->
+          line =
+            lines
+            |> Enum.join()
+
+          acc ++ [line]
+      end
+    end)
+    |> Enum.join()
   end
 
   defp process(row) do
     cond do
       String.starts_with?(row, "#") ->
-        {string, tag} = row
-        |> String.split(" ", parts: 2)
-        |> parse_header_md_level
-        enclose_with_tag(string, tag)
+        line =
+          row
+          |> String.split(" ", parts: 2)
+          |> parse_header_md_level
+          |> enclose_with_tag
+
+        {:header, line}
 
       String.starts_with?(row, "*") ->
-        parse_list_md_level(row)
+        line = parse_list_md_level(row)
+        {:list, line}
 
       true ->
-        row
-        |> replace_md_with_tag
-        |> enclose_with_tag("p")
+        line =
+          row
+          |> replace_md_with_tag
+          |> enclose_with_tag("p")
+
+        {:text, line}
     end
   end
 
@@ -52,15 +103,8 @@ defmodule Markdown do
     |> enclose_with_tag("li")
   end
 
+  defp enclose_with_tag({s, tag}), do: "<#{tag}>#{s}</#{tag}>"
   defp enclose_with_tag(s, tag), do: "<#{tag}>#{s}</#{tag}>"
-
-  defp replace_md_with_tag(w) do
-    strong_re = ~r/__(.+?)__/
-    em_re = ~r/_(.+?)_/
-    w
-    |> replace_word(strong_re, "strong")
-    |> replace_word(em_re, "em")
-  end
 
   defp replace_word(w, reg, tag) do
     cond do
@@ -68,13 +112,18 @@ defmodule Markdown do
         Regex.replace(reg, w, fn _, text ->
           enclose_with_tag(text, tag)
         end)
-     true -> w
+
+      true ->
+        w
     end
   end
 
-  defp patch(l) do
-    l
-    |> String.replace("<li>", "<ul><li>", global: false)
-    |> String.replace_suffix("</li>", "</li></ul>")
+  defp replace_md_with_tag(w) do
+    strong_re = ~r/__(.+?)__/
+    em_re = ~r/_(.+?)_/
+
+    w
+    |> replace_word(strong_re, "strong")
+    |> replace_word(em_re, "em")
   end
 end
