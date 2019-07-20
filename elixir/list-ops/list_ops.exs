@@ -34,22 +34,15 @@ defmodule ListOps do
     |> reverse
   end
 
-  # def append(a, b) do
-  #   reduce(b, reverse(a), fn x, acc ->
-  #     [x | acc]
-  #   end)
-  #   |> reverse
-  # end
-  def append(l, l, result \\ [])
-  def append([head | tail], b, result), do: append(tail, b, [head | result])
-  def append([], [head | tail], result), do: append([], tail, [head | result])
-  def append([], [], result), do: result |> reverse
+  def append([head | tail], b), do: [head | append(tail, b)]
+  def append([], b), do: b
 
   def concat(l) do
     l
-    # |> reverse
+    |> reverse
     |> reduce([], fn x, acc ->
       append(x, acc)
     end)
   end
+
 end

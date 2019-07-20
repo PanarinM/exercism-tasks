@@ -129,6 +129,7 @@ defmodule ListOpsTest do
     assert L.concat([[1, 2], [3], [], [4, 5, 6]]) == [1, 2, 3, 4, 5, 6]
   end
 
+  # @tag :pending
   test "concat of huge list of small lists" do
     assert L.concat(Enum.map(1..1_000_000, &[&1])) == Enum.to_list(1..1_000_000)
   end
