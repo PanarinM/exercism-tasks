@@ -1,0 +1,4 @@
+# compiled elisp
+*.elc
+# erlang beam files
+*.beam
