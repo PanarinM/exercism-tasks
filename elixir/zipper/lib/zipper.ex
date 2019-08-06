@@ -38,20 +38,22 @@ defmodule Zipper do
   def value(zipper), do: zipper.focus
 
   @spec move(Zipper.t(), atom) :: Zipper.t() | nil
-  defp move(zipper, direction) do
-    new_head =
-      case direction do
-        :left ->
-          %BinTree{value: zipper.focus, right: zipper.right, left: zipper.head}
-        :right ->
-          %BinTree{value: zipper.focus, left: zipper.left, right: zipper.head}
-      end
+  defp move(zipper, :left) do
     %Zipper{
-      focus: Map.get(zipper, direction).value,
-      head: new_head,
-      left: Map.get(zipper, direction).left,
-      right: Map.get(zipper, direction).right,
-      story: [direction | zipper.story]
+      focus: Map.get(zipper, :left).value,
+      head: %BinTree{value: zipper.focus, right: zipper.right, left: zipper.head},
+      left: Map.get(zipper, :left).left,
+      right: Map.get(zipper, :left).right,
+      story: [:left | zipper.story]
+    }
+  end
+  defp move(zipper, :right) do
+    %Zipper{
+      focus: Map.get(zipper, :right).value,
+      head: %BinTree{value: zipper.focus, left: zipper.left, right: zipper.head},
+      left: Map.get(zipper, :right).left,
+      right: Map.get(zipper, :right).right,
+      story: [:right | zipper.story]
     }
   end
 
@@ -62,7 +64,7 @@ defmodule Zipper do
   def left(%Zipper{left: left}) when left == nil, do: nil
   def left(zipper) do
     zipper
-    |> move :left
+    |> move(:left)
   end
 
   @doc """
@@ -72,7 +74,7 @@ defmodule Zipper do
   def right(%Zipper{right: right}) when right == nil, do: nil
   def right(zipper) do
     zipper
-    |> move :right
+    |> move(:right)
   end
 
   @doc """
@@ -88,7 +90,7 @@ defmodule Zipper do
       direction,
       %BinTree{value: zipper.focus, left: zipper.left, right: zipper.right}
     )
-    new_zipper = %Zipper{
+    %Zipper{
       focus: zipper.head.value,
       head: Map.get(zipper.head, direction),
       story: story,
