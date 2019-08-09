@@ -11,15 +11,15 @@
       (string= (upcase input) input)
     nil))
 
+(defun simple-question-p (input)
+  "Whether string is a simple question."
+  (string-suffix-p "?" input))
+
 (defun yelled-question-p (input)
   "Whether string is a question and yelled."
   (and
    (yelled-p input)
-   (string-suffix-p "?" input)))
-
-(defun simple-question-p (input)
-  "Whether string is a simple question."
-  (string-suffix-p "?" input))
+   (simple-question-p input)))
 
 (defun silence-p (input)
   "Whether string is empty."
