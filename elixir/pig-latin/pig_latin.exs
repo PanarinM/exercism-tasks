@@ -13,36 +13,44 @@ defmodule PigLatin do
 
   Some groups are treated like vowels, including "yt" and "xr".
   """
-  @vowels ["a", "e", "i", "o", "u", "xr", "yt"]
-  @consonants ["qu", "ch", "squ", "th", "sch", "b", "c", "d", "f", "g", "h",
-  "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "v", "w", "x", "y", "z", ]
+  @vowel_re ~r/^(a|e|i|o|u|xr|yt)+/
+  @consonant_re ~r/^(qu|b|c|d|f|g|h|j|k|l|m|n|p|r|s|t|q|v|w|x|y|z)+/
 
   @spec translate(phrase :: String.t()) :: String.t()
   def translate(phrase) do
+    phrase
+    |> String.split
+    |> Enum.map(&translate_word/1)
+    |> Enum.join(" ")
+  end
+
+  def translate_word(word) do
     cond do
-      start_wovel?(phrase) -> phrase <> "ay"
-      cons = start_consonant?(phrase) -> move_consonant(phrase, cons)
+      Regex.match?(@vowel_re, word) -> resolve_wovel(word)
+      true ->
+        case start_consonant?(word) do
+          {:ok, cons} -> resolve_consonant(word, cons)
+          _ -> raise "Something went wrong"
+        end
     end
   end
 
-  defp start_wovel?(phrase) do
-    Enum.any?(@vowels, fn vowel ->
-      String.starts_with?(phrase, vowel)
-    end)
+  def start_consonant?(phrase) do
+    case Regex.run(@consonant_re, phrase) do
+      [head | _] -> {:ok, head}
+      _ -> {:error, 0}
+    end
   end
 
-  defp start_consonant?(phrase) do
-    Enum.reduce_while(@consonants, List.first(@consonants), fn x, acc ->
-      case String.starts_with?(phrase, x) do
-        true -> {:halt, x}
-        _ -> {:cont, false}
-      end
-    end)
+  def resolve_wovel(phrase) do
+    phrase <> "ay"
   end
 
-  defp move_consonant(phrase, cons) do
-    String.slice(phrase, String.length(cons)..-1)
-    |> Kernel.<>(cons)
-    |> Kernel.<>("ay")
+  def resolve_consonant(phrase, cons) do
+    cond do
+	    String.starts_with?(cons, ["x", "y"]) and String.length(cons) > 1 -> resolve_wovel(phrase)
+      true -> String.slice(phrase, String.length(cons)..-1) <> cons <> "ay"
+    end
   end
+
 end
