@@ -2,3 +2,7 @@
 *.elc
 # erlang beam files
 *.beam
+# lsp files
+.elixir_ls/
+# Emacs locals
+.dir-locals.el
