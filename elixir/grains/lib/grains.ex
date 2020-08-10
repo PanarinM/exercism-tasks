@@ -11,7 +11,7 @@ defmodule Grains do
   @doc """
   Adds square of each number from 1 to 64.
   """
-  @spec total :: pos_integer
+  @spec total :: {:ok, pos_integer}
   def total do
     {:ok, Enum.map(1..64, fn x ->
         {:ok, val} = square(x)
